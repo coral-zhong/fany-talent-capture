@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fanny 达人抓取设置</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      body { width: auto; max-width: 760px; margin: 0 auto; }
+      .shell { padding: 28px; }
+      .settings { display: grid; gap: 14px; }
+      textarea { min-height: 260px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .actions { grid-template-columns: 120px 120px 1fr; }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <h1>插件设置</h1>
+          <p id="status">配置提交接口和宜搭字段映射</p>
+        </div>
+      </header>
+
+      <section class="settings">
+        <label>
+          <span>提交接口</span>
+          <input id="endpointUrl" placeholder="http://localhost:8791/api/talents/upsert">
+        </label>
+        <label>
+          <span>接口令牌，可留空</span>
+          <input id="authToken" placeholder="和代理服务的 FANY_CAPTURE_TOKEN 一致">
+        </label>
+        <label>
+          <span>成员 token</span>
+          <input id="memberToken" placeholder="向管理员领取，标识当前录入人">
+        </label>
+        <label>
+          <span>字段映射 JSON</span>
+          <textarea id="fieldMap"></textarea>
+        </label>
+      </section>
+
+      <section class="actions">
+        <button id="save" class="primary">保存</button>
+        <button id="testConnection" class="secondary">测试连接</button>
+        <button id="reset" class="secondary">恢复默认映射</button>
+      </section>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

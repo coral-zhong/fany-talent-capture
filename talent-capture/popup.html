@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fanny 达人抓取</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">FANY Creator</p>
+          <h1>达人入库</h1>
+        </div>
+        <button id="openOptions" class="icon-button" title="设置">设置</button>
+      </header>
+
+      <nav class="tabs" aria-label="达人信息阶段">
+        <button class="tab active" data-tab="base" type="button"><span>基础信息</span><small>Profile</small></button>
+        <button class="tab" data-tab="representative" type="button"><span>内容</span><small>Content</small></button>
+        <button class="tab" data-tab="nox" type="button"><span>补充数据</span><small>NOX</small></button>
+        <button class="tab" data-tab="fastmoss" type="button"><span>带货数据</span><small>FastMoss</small></button>
+        <button class="tab" data-tab="dingtalk" type="button"><span>运营填写</span><small>钉钉</small></button>
+        <button class="tab" data-tab="confirm" type="button"><span>确认</span><small>Submit</small></button>
+      </nav>
+
+      <section class="summary">
+        <div class="summary-main">
+          <span class="summary-label">当前达人</span>
+          <strong id="summaryName">未采集</strong>
+        </div>
+        <div class="route-summary">
+          <span class="summary-label">目标表</span>
+          <strong id="targetTableName">未判断</strong>
+        </div>
+        <div class="progress-dots" aria-label="采集进度">
+          <span id="dotBase" title="基础信息"></span>
+          <span id="dotRepresentative" title="代表内容"></span>
+          <span id="dotNox" title="Nox信息"></span>
+        </div>
+      </section>
+
+      <p id="status" class="status">请先在达人主页采集基础信息</p>
+
+      <section class="panel active" data-panel="base">
+        <div class="panel-head">
+          <div>
+            <h2>基础信息</h2>
+            <p>从达人主页抓取，抓不到的字段保留为空。</p>
+          </div>
+          <div class="panel-actions">
+            <button id="clearCurrent" class="secondary" type="button">清空</button>
+            <button id="captureBase" class="secondary" type="button">采集当前主页</button>
+          </div>
+        </div>
+        <div class="grid">
+          <label>
+            <span>creator_id</span>
+            <input id="talent_id">
+          </label>
+          <label>
+            <span>目标表</span>
+            <select id="target_table">
+              <option value="general">1.1_达人数据库_YT_IG_FB</option>
+              <option value="tk">1.2_达人数据库_TK</option>
+            </select>
+          </label>
+          <label>
+            <span>平台</span>
+            <input id="platform">
+          </label>
+          <label>
+            <span>昵称</span>
+            <input id="display_name">
+          </label>
+          <label>
+            <span>账号</span>
+            <input id="platform_account">
+          </label>
+          <label>
+            <span>粉丝数</span>
+            <input id="follower_count" type="number" min="0">
+          </label>
+          <label class="wide">
+            <span>主页链接</span>
+            <input id="profile_url">
+          </label>
+          <label>
+            <span>邮箱</span>
+            <input id="email" type="email">
+          </label>
+          <label>
+            <span>联系方式</span>
+            <input id="contact" placeholder="邮箱/WhatsApp/经纪 等">
+          </label>
+          <label class="wide">
+            <span>简介</span>
+            <textarea id="bio" rows="5"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="representative">
+        <div class="panel-head">
+          <div>
+            <h2>代表内容</h2>
+            <p>打开具体内容页后采集，作为当前达人样本内容。</p>
+          </div>
+          <button id="captureRepresentative" class="secondary" type="button">设为代表内容</button>
+        </div>
+        <div class="grid">
+          <label class="wide">
+            <span>内容链接</span>
+            <input id="representative_content" placeholder="视频 / Reel / Post 链接">
+          </label>
+          <label>
+            <span>曝光</span>
+            <input id="representative_likes" type="number" min="0">
+          </label>
+          <label>
+            <span>评论数</span>
+            <input id="representative_comments" type="number" min="0">
+          </label>
+          <fieldset class="wide checkbox-field" data-checkbox-group="comment_direction">
+            <legend>评论导向</legend>
+            <input id="comment_direction" type="hidden">
+            <div class="checkbox-grid">
+              <label class="checkbox-option"><input type="checkbox" data-field="comment_direction" value="问链接"><span>问链接</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="comment_direction" value="问价格"><span>问价格</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="comment_direction" value="购买意向"><span>购买意向</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="comment_direction" value="问产品功能"><span>问产品功能</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="comment_direction" value="空泛夸赞"><span>空泛夸赞</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="comment_direction" value="负面"><span>负面</span></label>
+            </div>
+          </fieldset>
+          <label class="wide">
+            <span>评论导向补充填写</span>
+            <input id="comment_direction_extra" placeholder="补充填写">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="fastmoss">
+        <div class="panel-head">
+          <div>
+            <h2>FastMoss 带货数据</h2>
+            <p>打开 FastMoss 达人详情页后采集 TikTok 带货判断字段。</p>
+          </div>
+          <div class="panel-actions">
+            <button id="openFastMoss" class="secondary" type="button">打开FastMoss</button>
+            <button id="captureFastMoss" class="secondary" type="button">采集FastMoss</button>
+          </div>
+        </div>
+        <div class="grid">
+          <label>
+            <span>TT原生ID(secUid)</span>
+            <input id="fastmoss_sec_uid">
+          </label>
+          <label>
+            <span>橱窗状态</span>
+            <input id="shop_window_status">
+          </label>
+          <label class="wide">
+            <span>FastMoss 链接</span>
+            <input id="fastmoss_profile_url" placeholder="自动根据 TT原生ID(secUid) 生成" readonly>
+          </label>
+          <label class="wide">
+            <span>带货倾向</span>
+            <input id="commerce_intent">
+          </label>
+          <label>
+            <span>国家</span>
+            <input id="country">
+          </label>
+          <label>
+            <span>语言</span>
+            <input id="language">
+          </label>
+          <label>
+            <span>MCN签约</span>
+            <input id="mcn_name">
+          </label>
+          <label>
+            <span>首条视频时间</span>
+            <input id="first_video_date">
+          </label>
+          <label>
+            <span>带货销量（近28天）</span>
+            <input id="sales_28d" type="number" min="0">
+          </label>
+          <label>
+            <span>客单价</span>
+            <input id="avg_order_value" type="number" min="0" step="0.01">
+          </label>
+          <label class="wide">
+            <span>带货品类</span>
+            <input id="commerce_categories">
+          </label>
+          <label class="wide">
+            <span>带货商品</span>
+            <input id="commerce_products">
+          </label>
+          <label>
+            <span>粉丝数据，女性占比</span>
+            <input id="audience_female_pct" type="number" min="0" max="100" step="0.01">
+          </label>
+          <label>
+            <span>年龄</span>
+            <input id="fastmoss_audience_age">
+          </label>
+          <label class="wide">
+            <span>国家地区</span>
+            <input id="fastmoss_audience_regions">
+          </label>
+          <label class="wide">
+            <span>前5主题标签</span>
+            <input id="top_hashtags">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="nox">
+        <div class="panel-head">
+          <div>
+            <h2>Nox 信息</h2>
+            <p>打开 Nox 达人页后采集受众与互动数据。</p>
+          </div>
+          <div class="panel-actions">
+            <button id="openNox" class="secondary" type="button">打开Nox</button>
+            <button id="captureNox" class="secondary" type="button">采集Nox</button>
+          </div>
+        </div>
+        <div class="grid">
+          <label class="wide">
+            <span>Nox 达人主页链接</span>
+            <input id="nox_profile_url" placeholder="例如 https://cn.noxinfluencer.com/instagram/channel/49488950803">
+          </label>
+          <label>
+            <span>近10条内容平均观看量</span>
+            <input id="avg_views_30d" type="number" min="0">
+          </label>
+          <label>
+            <span>互动率%</span>
+            <input id="engagement_rate" type="number" min="0" step="0.01">
+          </label>
+          <label>
+            <span>内容数量</span>
+            <input id="content_count" type="number" min="0">
+          </label>
+          <label>
+            <span>粉丝可信度</span>
+            <input id="audience_credibility" type="number" min="0" max="5" step="0.1">
+          </label>
+          <label>
+            <span>达人类别</span>
+            <input id="creator_category" placeholder="如 美妆 / 家居 / 3C">
+          </label>
+          <label class="wide">
+            <span>Top3受众国家</span>
+            <input id="audience_top_countries">
+          </label>
+          <label>
+            <span>最多受众性别</span>
+            <input id="audience_top_gender">
+          </label>
+          <label>
+            <span>最多受众年龄</span>
+            <input id="audience_top_age">
+          </label>
+          <label class="wide">
+            <span>内容分布-兴趣点</span>
+            <input id="content_interests">
+          </label>
+          <label class="wide">
+            <span>提及前十个品牌</span>
+            <input id="mentioned_brands_top10">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="dingtalk">
+        <div class="panel-head">
+          <div>
+            <h2>钉钉字段</h2>
+            <p>这些字段用于审核、归属、分级和后续合作管理。</p>
+          </div>
+        </div>
+        <div class="grid">
+          <label>
+            <span>达人类型</span>
+            <select id="creator_type">
+              <option value="">— 请选择 —</option>
+              <option value="曝光类">曝光类</option>
+              <option value="转化类">转化类</option>
+              <option value="曝光+转化">曝光+转化</option>
+            </select>
+          </label>
+          <label>
+            <span>审核状态</span>
+            <select id="review_status">
+              <option value="">— 请选择 —</option>
+              <option value="待审核">待审核</option>
+              <option value="已通过">已通过</option>
+            </select>
+          </label>
+          <label>
+            <span>历史合作结果</span>
+            <select id="historical_cooperation_result">
+              <option value="">— 请选择 —</option>
+              <option value="未合作">未合作</option>
+              <option value="出单好">出单好</option>
+              <option value="出单一般">出单一般</option>
+              <option value="仅上线未出单">仅上线未出单</option>
+              <option value="未出单">未出单</option>
+            </select>
+          </label>
+          <fieldset class="wide checkbox-field" data-checkbox-group="channel_ownership">
+            <legend>渠道归属</legend>
+            <input id="channel_ownership" type="hidden">
+            <div class="checkbox-grid">
+              <label class="checkbox-option"><input type="checkbox" data-field="channel_ownership" value="品牌"><span>品牌</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="channel_ownership" value="Amazon"><span>Amazon</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="channel_ownership" value="Shopify"><span>Shopify</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="channel_ownership" value="TikTok"><span>TikTok</span></label>
+            </div>
+          </fieldset>
+          <label class="wide">
+            <span>渠道归属补充填写</span>
+            <input id="channel_ownership_extra" placeholder="自主填写">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="confirm">
+        <div class="panel-head">
+          <div>
+            <h2>全部信息</h2>
+            <p>确认无误后加入达人库。</p>
+          </div>
+        </div>
+        <div id="reviewSummary" class="review-summary"></div>
+      </section>
+
+      <footer class="footer">
+        <div>
+          <strong id="readyTitle">还不能加入达人库</strong>
+          <p id="readyHint">完成基础信息、代表内容和 Nox 信息后再提交。</p>
+        </div>
+        <div class="footer-actions">
+          <button id="exportCsv" class="secondary" type="button">导出CSV</button>
+          <button id="submit" class="primary" type="button" disabled>确认无误，加入达人库</button>
+        </div>
+      </footer>
+
+      <pre id="log" hidden></pre>
+    </main>
+    <script src="capture-workflow.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

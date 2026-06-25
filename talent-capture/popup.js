@@ -207,7 +207,7 @@ const getApiUrl = (config, pathname) => {
 };
 
 const buildHeaders = (config, includeJson = false) => {
-  const headers = {};
+  const headers = { "ngrok-skip-browser-warning": "true" };
   if (includeJson) headers["content-type"] = "application/json";
   if (config.authToken) headers.authorization = `Bearer ${config.authToken}`;
   if (config.memberToken) headers["x-fany-member-token"] = config.memberToken;

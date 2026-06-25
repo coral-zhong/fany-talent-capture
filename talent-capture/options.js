@@ -110,7 +110,9 @@ const testConnection = async () => {
     let lastError = null;
     for (const url of urlsToTry) {
       try {
-        const response = await fetch(url.toString());
+        const response = await fetch(url.toString(), {
+          headers: { "ngrok-skip-browser-warning": "true" }
+        });
         const body = await response.json().catch(() => ({}));
         if (!response.ok || !body.ok) {
           lastError = new Error(body.error || response.status);

@@ -4,12 +4,12 @@ Chrome extension for collecting creator profile data from TikTok, Instagram, You
 
 ## Latest Version
 
-- Extension version: `0.4.13`
-- Install package: `dist/fany-talent-capture-0.4.13.zip`
+- Extension version: `0.4.20`
+- Install package: `dist/fany-talent-capture-0.4.20.zip`
 
 ## Install From ZIP
 
-1. Download `dist/fany-talent-capture-0.4.13.zip`.
+1. Download `dist/fany-talent-capture-0.4.20.zip`.
 2. Unzip it.
 3. Open Chrome and go to `chrome://extensions/`.
 4. Turn on Developer Mode.
@@ -38,4 +38,3 @@ http://127.0.0.1:8791/api/talents/upsert
 ## Notes
 
 This repository intentionally excludes server secrets, `.env`, member token lists, logs, and backend runtime files.
-

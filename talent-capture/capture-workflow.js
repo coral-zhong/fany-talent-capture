@@ -58,9 +58,7 @@
   const applyManualDefaults = (record = {}) => {
     return {
       ...record,
-      creator_type: first(record.creator_type, "曝光类"),
       review_status: first(record.review_status, "待审核"),
-      historical_cooperation_result: first(record.historical_cooperation_result, "未合作"),
       channel_ownership: first(record.channel_ownership, ["品牌"])
     };
   };
@@ -90,8 +88,6 @@
       return ensureCreatorId({
         ...base,
         representative_content: first(incoming.representative_content, incoming.content_url, incoming.profile_url, base.representative_content),
-        representative_likes: first(incoming.representative_likes, base.representative_likes),
-        representative_comments: first(incoming.representative_comments, base.representative_comments),
         comment_direction: first(incoming.comment_direction, base.comment_direction),
         source: layerSource,
         source_url: normalizeUrl(first(incoming.source_url, incoming.profile_url, base.source_url))
@@ -102,7 +98,6 @@
       return ensureCreatorId({
         ...base,
         country: first(incoming.country, firstAudienceCountry(incoming.audience_top_countries), base.country),
-        language: first(incoming.language, base.language),
         creator_category: first(incoming.creator_category, base.creator_category),
         avg_views_30d: first(incoming.avg_views_30d, base.avg_views_30d),
         engagement_rate: first(incoming.engagement_rate, base.engagement_rate),
@@ -162,7 +157,7 @@
     });
     const stages = {
       base: hasAny("creator_id", "talent_id") && hasAny("platform") && hasAny("platform_account", "profile_url"),
-      representative: hasAny("representative_content") && hasAny("representative_likes", "representative_comments", "comment_direction"),
+      representative: hasAny("representative_content"),
       nox: hasAny("avg_views_30d", "engagement_rate", "audience_top_countries", "audience_credibility")
     };
     const missingStages = Object.entries(stages)

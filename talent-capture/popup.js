@@ -1,9 +1,10 @@
 const FIELD_IDS = [
   "talent_id",
   "target_table",
-  "creator_type",
   "review_status",
-  "historical_cooperation_result",
+  "cooperation_products",
+  "cooperation_price",
+  "cooperation_details",
   "creator_category",
   "channel_ownership",
   "platform",
@@ -13,7 +14,6 @@ const FIELD_IDS = [
   "profile_url",
   "nox_profile_url",
   "country",
-  "language",
   "email",
   "contact",
   "bio",
@@ -41,17 +41,16 @@ const FIELD_IDS = [
   "fastmoss_audience_age",
   "top_hashtags",
   "representative_content",
-  "representative_likes",
-  "representative_comments",
   "comment_direction"
 ];
 
 const FIELD_LABELS = {
   talent_id: "creator_id",
   target_table: "目标表",
-  creator_type: "达人类型",
   review_status: "审核状态",
-  historical_cooperation_result: "历史合作结果",
+  cooperation_products: "合作产品",
+  cooperation_price: "合作价格",
+  cooperation_details: "合作详情",
   creator_category: "达人类别",
   channel_ownership: "渠道归属",
   platform: "平台",
@@ -61,7 +60,6 @@ const FIELD_LABELS = {
   profile_url: "主页链接",
   nox_profile_url: "Nox 达人主页链接",
   country: "国家",
-  language: "语言",
   email: "邮箱",
   contact: "联系方式",
   bio: "简介",
@@ -89,21 +87,20 @@ const FIELD_LABELS = {
   fastmoss_audience_age: "年龄",
   top_hashtags: "前5主题标签",
   representative_content: "内容链接",
-  representative_likes: "曝光",
-  representative_comments: "评论数",
   comment_direction: "评论导向"
 };
 
 const REVIEW_GROUPS = [
   { title: "基础信息", fields: ["talent_id", "target_table", "platform", "display_name", "platform_account", "follower_count", "profile_url", "email", "contact", "bio"] },
-  { title: "代表内容", fields: ["representative_content", "representative_likes", "representative_comments", "comment_direction"] },
-  { title: "Nox 信息", fields: ["nox_profile_url", "avg_views_30d", "engagement_rate", "content_count", "audience_credibility", "country", "language", "creator_category", "audience_top_countries", "audience_top_gender", "audience_top_age", "content_interests", "mentioned_brands_top10"] },
-  { title: "FastMoss 数据", fields: ["fastmoss_sec_uid", "fastmoss_profile_url", "country", "language", "shop_window_status", "commerce_intent", "mcn_name", "first_video_date", "sales_28d", "commerce_categories", "commerce_products", "avg_order_value", "audience_female_pct", "fastmoss_audience_regions", "fastmoss_audience_age", "top_hashtags"] },
-  { title: "钉钉字段", fields: ["creator_type", "review_status", "historical_cooperation_result", "channel_ownership"] }
+  { title: "代表内容", fields: ["representative_content", "comment_direction"] },
+  { title: "Nox 信息", fields: ["nox_profile_url", "avg_views_30d", "engagement_rate", "content_count", "audience_credibility", "country", "creator_category", "audience_top_countries", "audience_top_gender", "audience_top_age", "content_interests", "mentioned_brands_top10"] },
+  { title: "FastMoss 数据", fields: ["fastmoss_sec_uid", "fastmoss_profile_url", "country", "shop_window_status", "commerce_intent", "mcn_name", "first_video_date", "sales_28d", "commerce_categories", "commerce_products", "avg_order_value", "audience_female_pct", "fastmoss_audience_regions", "fastmoss_audience_age", "top_hashtags"] },
+  { title: "钉钉字段", fields: ["review_status", "cooperation_products", "cooperation_price", "cooperation_details", "channel_ownership"] }
 ];
 
 const $ = (id) => document.getElementById(id);
-const checkboxListFields = new Set(["comment_direction", "channel_ownership"]);
+const checkboxListFields = new Set(["comment_direction", "channel_ownership", "cooperation_products"]);
+const DEFAULT_ENDPOINT_URL = "https://espresso-either-masses.ngrok-free.dev/api/talents/upsert";
 const workflow = globalThis.FanyCaptureWorkflow;
 const CURRENT_TALENT_KEY = "currentTalentRecord";
 let currentCaptureSource = "Chrome插件";
@@ -176,6 +173,35 @@ const formatReviewValue = (value) => {
   return String(value);
 };
 
+const formatDialogScalar = (value) => {
+  if (Array.isArray(value)) return value.map(formatDialogScalar).filter(Boolean).join(", ");
+  if (value && typeof value === "object") {
+    return value.name ||
+      value.text ||
+      value.link ||
+      value.value ||
+      value.title ||
+      value.label ||
+      value.unionId ||
+      value.id ||
+      Object.values(value).map(formatDialogScalar).find(Boolean) ||
+      "";
+  }
+  return value === undefined || value === null ? "" : String(value);
+};
+
+const formatDialogDateTime = (value) => {
+  const raw = formatDialogScalar(value);
+  if (!raw) return "";
+  const numeric = Number(raw);
+  const date = Number.isFinite(numeric)
+    ? new Date(numeric > 10_000_000_000 ? numeric : numeric * 1000)
+    : new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 const renderReviewSummary = (record = collectForm()) => {
   const container = $("reviewSummary");
   if (!container) return;
@@ -195,7 +221,7 @@ const getConfig = async () => {
 };
 
 const getApiUrl = (config, pathname) => {
-  const raw = (config.endpointUrl || "http://localhost:8791/api/talents/upsert").trim();
+  const raw = (config.endpointUrl || DEFAULT_ENDPOINT_URL).trim();
   const url = new URL(raw);
   if ((url.hostname === "localhost" || url.hostname === "127.0.0.1") && (url.port === "8787" || url.port === "8790")) {
     url.port = "8791";
@@ -331,11 +357,9 @@ const collectForm = () => {
     "follower_count",
     "sales_28d",
     "avg_order_value",
-    "audience_female_pct",
-    "representative_likes",
-    "representative_comments"
+    "audience_female_pct"
   ]);
-  const listFields = new Set(["audience_top_countries", "content_interests", "mentioned_brands_top10", "commerce_categories", "commerce_products", "fastmoss_audience_regions", "top_hashtags", "channel_ownership", "comment_direction"]);
+  const listFields = new Set(["audience_top_countries", "content_interests", "mentioned_brands_top10", "commerce_categories", "commerce_products", "fastmoss_audience_regions", "top_hashtags", "channel_ownership", "comment_direction", "cooperation_products"]);
   for (const id of FIELD_IDS) {
     const node = $(id);
     const value = checkboxListFields.has(id)
@@ -497,6 +521,14 @@ const checkIdentityMatch = (current, incoming) => {
   return { ok: true };
 };
 
+const isCrossPlatformNoxAllowed = (layer, current, incoming) => {
+  if (layer !== "nox") return false;
+  if (!$("allow_cross_platform_nox")?.checked) return false;
+  const currentPlatform = String(current?.platform || "").trim().toLowerCase();
+  const incomingPlatform = String(incoming?.platform || "").trim().toLowerCase();
+  return Boolean(currentPlatform && incomingPlatform && currentPlatform !== incomingPlatform);
+};
+
 const captureLayer = async (layer) => {
   const data = await extractPageData();
   if (layer === "fastmoss" && !/fastmoss\.com/i.test(data.source_url || data.fastmoss_profile_url || data.profile_url || "")) {
@@ -514,11 +546,12 @@ const captureLayer = async (layer) => {
   // which would silently keep the previous creator_id / 用户id.
   if (layer !== "base") {
     const identity = checkIdentityMatch(baseRecord, data);
-    if (!identity.ok) {
+    if (!identity.ok && !isCrossPlatformNoxAllowed(layer, baseRecord, data)) {
       throw new Error(`身份不一致：当前面板是「${identity.current}」，但此页是「${identity.incoming}」。请先到该达人原生主页重新点「采集基础信息」，再补这一层，避免写到上一个 creator_id。`);
     }
   }
 
+  const crossPlatformNox = isCrossPlatformNoxAllowed(layer, baseRecord, data);
   const merged = workflow.mergeLayer(baseRecord || {}, data, layer);
   const saved = await setCurrentTalentRecord(merged);
   if (layer === "nox") await setPendingNoxProfile(saved);
@@ -531,7 +564,9 @@ const captureLayer = async (layer) => {
     fastmoss: "FastMoss 带货数据已合并，将更新同一位达人"
   }[layer] || "已采集";
   const completion = updateCompletionUi(saved);
-  setStatus(completion.ready ? "信息已完整，可以加入达人库" : statusText);
+  setStatus(crossPlatformNox
+    ? "跨平台 Nox 信息已合并：保留基础平台/账号，只更新 Nox 指标"
+    : completion.ready ? "信息已完整，可以加入达人库" : statusText);
   return saved;
 };
 
@@ -625,7 +660,7 @@ const loadMember = async () => {
 
 const submit = async () => {
   const config = await getConfig();
-  if (!config.endpointUrl) config.endpointUrl = "http://localhost:8791/api/talents/upsert";
+  if (!config.endpointUrl) config.endpointUrl = DEFAULT_ENDPOINT_URL;
 
   const record = collectForm();
   const completion = updateCompletionUi(record);
@@ -638,8 +673,10 @@ const submit = async () => {
   const existing = await checkExists(record, config);
   if (existing?.exists) {
     const summary = existing.summary || {};
-    const owner = summary.createdByName ? `，已被 ${summary.createdByName} 录入` : "";
-    const at = summary.createdAt ? `（${summary.createdAt}）` : "";
+    const createdByName = formatDialogScalar(summary.createdByName);
+    const createdAt = formatDialogDateTime(summary.createdAt);
+    const owner = createdByName ? `，已被 ${createdByName} 录入` : "";
+    const at = createdAt ? `（${createdAt}）` : "";
     if (!confirm(`该达人可能已存在${owner}${at}，是否仅更新数据？`)) {
       setStatus("已取消提交");
       return;
@@ -678,7 +715,8 @@ const submit = async () => {
   const submittedTarget = body?.targetTable || record.target_table;
   const submittedTableName = targetTableNames[submittedTarget] || submittedTarget || "达人库";
   const submittedSheet = body?.table?.sheetId ? `（sheetId: ${body.table.sheetId}）` : "";
-  setStatus(`已提交到达人库：${submittedTableName}${submittedSheet}`);
+  const warning = body?.warning ? `；${body.warning}` : "";
+  setStatus(`已提交到达人库：${submittedTableName}${submittedSheet}${warning}`, Boolean(warning));
   setLog(body);
 };
 
@@ -778,7 +816,7 @@ $("submit").addEventListener("click", async () => {
     await submit();
   } catch (error) {
     const message = /Failed to fetch/i.test(error.message)
-      ? "连接后端失败：请确认设置接口为 http://localhost:8791/api/talents/upsert，且本地后端已启动"
+      ? `连接后端失败：请确认设置接口为 ${DEFAULT_ENDPOINT_URL}`
       : error.message;
     setStatus(message, true);
     setLog(error.stack || error.message);

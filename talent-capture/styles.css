@@ -324,6 +324,34 @@ select[multiple] option {
 .checkbox-option span {
   color: var(--text);
   font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.inline-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.inline-check input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.inline-check span {
+  color: var(--text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.product-grid {
+  grid-template-columns: 1fr;
 }
 
 .review-summary {

@@ -1,8 +1,9 @@
 const DEFAULT_FIELD_MAP = {
   talent_id: "creator_id",
-  creator_type: "达人类型",
   review_status: "审核状态",
-  historical_cooperation_result: "历史合作结果",
+  cooperation_products: "合作产品",
+  cooperation_price: "合作价格",
+  cooperation_details: "合作详情",
   creator_category: "达人类别",
   channel_ownership: "渠道归属",
   display_name: "昵称",
@@ -11,7 +12,6 @@ const DEFAULT_FIELD_MAP = {
   profile_url: "主页链接",
   nox_profile_url: "Nox达人主页链接",
   country: "国家",
-  language: "语言",
   email: "联系方式",
   contact: "联系方式",
   bio: "达人简介",
@@ -25,9 +25,8 @@ const DEFAULT_FIELD_MAP = {
   content_interests: "内容分布-兴趣点",
   mentioned_brands_top10: "互动率-提及品牌前十个",
   representative_content: "内容链接",
-  representative_likes: "曝光",
-  representative_comments: "评论数",
   comment_direction: "评论导向",
+  created_by_name: "录入人",
   created_by_user_id: "录入人ID",
   created_by_union_id: "录入人unionId",
   created_by_role: "录入人角色",
@@ -35,6 +34,7 @@ const DEFAULT_FIELD_MAP = {
 };
 
 const $ = (id) => document.getElementById(id);
+const DEFAULT_ENDPOINT_URL = "https://espresso-either-masses.ngrok-free.dev/api/talents/upsert";
 
 const setStatus = (message, isError = false) => {
   $("status").textContent = message;
@@ -42,7 +42,7 @@ const setStatus = (message, isError = false) => {
 };
 
 const normalizeEndpointUrl = (value) => {
-  const raw = value.trim() || "http://localhost:8791/api/talents/upsert";
+  const raw = value.trim() || DEFAULT_ENDPOINT_URL;
   const url = new URL(raw);
   if ((url.hostname === "localhost" || url.hostname === "127.0.0.1") && (url.port === "8787" || url.port === "8790")) {
     url.port = "8791";
@@ -70,7 +70,7 @@ const getLoopbackFallbackUrl = (url) => {
 
 const load = async () => {
   const config = await chrome.storage.sync.get(["endpointUrl", "authToken", "memberToken", "fieldMap"]);
-  $("endpointUrl").value = config.endpointUrl || "http://localhost:8791/api/talents/upsert";
+  $("endpointUrl").value = config.endpointUrl || DEFAULT_ENDPOINT_URL;
   $("authToken").value = config.authToken || "";
   $("memberToken").value = config.memberToken || "";
   $("fieldMap").value = config.fieldMap || JSON.stringify(DEFAULT_FIELD_MAP, null, 2);

@@ -1,3 +1,5 @@
+const DEFAULT_ENDPOINT_URL = "https://espresso-either-masses.ngrok-free.dev/api/talents/upsert";
+
 chrome.runtime.onInstalled.addListener(async () => {
   const current = await chrome.storage.sync.get([
     "endpointUrl",
@@ -6,16 +8,15 @@ chrome.runtime.onInstalled.addListener(async () => {
   ]);
 
   const defaults = {};
-  if (!current.endpointUrl) {
-    defaults.endpointUrl = "http://localhost:8791/api/talents/upsert";
-  } else if (/^http:\/\/(localhost|127\.0\.0\.1):(8787|8790)\b/.test(current.endpointUrl)) {
-    defaults.endpointUrl = current.endpointUrl.replace(/:(8787|8790)\b/, ":8791");
+  if (current.endpointUrl !== DEFAULT_ENDPOINT_URL) {
+    defaults.endpointUrl = DEFAULT_ENDPOINT_URL;
   }
   const defaultFieldMap = {
       talent_id: "creator_id",
-      creator_type: "达人类型",
       review_status: "审核状态",
-      historical_cooperation_result: "历史合作结果",
+      cooperation_products: "合作产品",
+      cooperation_price: "合作价格",
+      cooperation_details: "合作详情",
       creator_category: "达人类别",
       channel_ownership: "渠道归属",
       display_name: "昵称",
@@ -25,7 +26,6 @@ chrome.runtime.onInstalled.addListener(async () => {
       profile_url: "主页链接",
       nox_profile_url: "Nox达人主页链接",
       country: "国家",
-      language: "语言",
       email: "邮箱",
       contact: "联系方式",
       bio: "达人简介",
@@ -53,9 +53,8 @@ chrome.runtime.onInstalled.addListener(async () => {
       fastmoss_audience_age: "年龄",
       top_hashtags: "前 5 主题标签",
       representative_content: "内容链接",
-      representative_likes: "曝光",
-      representative_comments: "评论数",
       comment_direction: "评论导向",
+      created_by_name: "录入人",
       created_by_user_id: "录入人ID",
       created_by_union_id: "录入人unionId",
       created_by_role: "录入人角色",
@@ -66,15 +65,25 @@ chrome.runtime.onInstalled.addListener(async () => {
   } else {
     try {
       const fieldMap = JSON.parse(current.fieldMap);
+      let changed = false;
+      ["creator_type", "historical_cooperation_result", "language", "representative_likes", "representative_comments"].forEach((field) => {
+        if (Object.hasOwn(fieldMap, field)) {
+          delete fieldMap[field];
+          changed = true;
+        }
+      });
       const migrations = {
         mentioned_brands_top10: ["互动率-提及品牌前十个"],
         email: ["联系方式", "联系邮箱", "邮件"],
         fastmoss_profile_url: ["FastMoss链接", "FastMoss 达人主页"],
         mcn_name: ["MCN签约"],
         sales_28d: ["带货销量（近28天）", "带货销量"],
-        top_hashtags: ["前5主题标签", "近 28 天前五主题标签"]
+        top_hashtags: ["前5主题标签", "近 28 天前五主题标签"],
+        created_by_name: [undefined],
+        cooperation_products: [undefined],
+        cooperation_price: [undefined],
+        cooperation_details: [undefined]
       };
-      let changed = false;
       for (const [field, oldValues] of Object.entries(migrations)) {
         if (oldValues.includes(fieldMap[field])) {
           fieldMap[field] = defaultFieldMap[field];

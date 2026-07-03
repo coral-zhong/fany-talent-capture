@@ -114,14 +114,6 @@
             <span>内容链接</span>
             <input id="representative_content" placeholder="视频 / Reel / Post 链接">
           </label>
-          <label>
-            <span>曝光</span>
-            <input id="representative_likes" type="number" min="0">
-          </label>
-          <label>
-            <span>评论数</span>
-            <input id="representative_comments" type="number" min="0">
-          </label>
           <fieldset class="wide checkbox-field" data-checkbox-group="comment_direction">
             <legend>评论导向</legend>
             <input id="comment_direction" type="hidden">
@@ -172,10 +164,6 @@
           <label>
             <span>国家</span>
             <input id="country">
-          </label>
-          <label>
-            <span>语言</span>
-            <input id="language">
           </label>
           <label>
             <span>MCN签约</span>
@@ -232,13 +220,17 @@
           </div>
         </div>
         <div class="grid">
-          <label class="wide">
-            <span>Nox 达人主页链接</span>
-            <input id="nox_profile_url" placeholder="例如 https://cn.noxinfluencer.com/instagram/channel/49488950803">
-          </label>
-          <label>
-            <span>近10条内容平均观看量</span>
-            <input id="avg_views_30d" type="number" min="0">
+	          <label class="wide">
+	            <span>Nox 达人主页链接</span>
+	            <input id="nox_profile_url" placeholder="例如 https://cn.noxinfluencer.com/instagram/channel/49488950803">
+	          </label>
+	          <label class="wide inline-check">
+	            <input id="allow_cross_platform_nox" type="checkbox">
+	            <span>允许跨平台 Nox 补充（保留基础平台/账号，只合并 Nox 指标）</span>
+	          </label>
+	          <label>
+	            <span>近10条内容平均观看量</span>
+	            <input id="avg_views_30d" type="number" min="0">
           </label>
           <label>
             <span>互动率%</span>
@@ -288,35 +280,57 @@
         </div>
         <div class="grid">
           <label>
-            <span>达人类型</span>
-            <select id="creator_type">
-              <option value="">— 请选择 —</option>
-              <option value="曝光类">曝光类</option>
-              <option value="转化类">转化类</option>
-              <option value="曝光+转化">曝光+转化</option>
-            </select>
-          </label>
-          <label>
             <span>审核状态</span>
             <select id="review_status">
               <option value="">— 请选择 —</option>
               <option value="待审核">待审核</option>
               <option value="已通过">已通过</option>
+              <option value="条件合作">条件合作</option>
             </select>
           </label>
-          <label>
-            <span>历史合作结果</span>
-            <select id="historical_cooperation_result">
-              <option value="">— 请选择 —</option>
-              <option value="未合作">未合作</option>
-              <option value="出单好">出单好</option>
-              <option value="出单一般">出单一般</option>
-              <option value="仅上线未出单">仅上线未出单</option>
-              <option value="未出单">未出单</option>
-            </select>
-          </label>
-          <fieldset class="wide checkbox-field" data-checkbox-group="channel_ownership">
-            <legend>渠道归属</legend>
+	          <fieldset class="wide checkbox-field" data-checkbox-group="cooperation_products">
+	            <legend>合作产品</legend>
+	            <input id="cooperation_products" type="hidden">
+	            <div class="checkbox-grid product-grid">
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_皮带款_午夜黑（Midnight Black）"><span>FANY Luna_皮带款_午夜黑（Midnight Black）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_皮带款_腮红玫瑰（Blush Rose）"><span>FANY Luna_皮带款_腮红玫瑰（Blush Rose）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_皮带款_玫瑰金（Rose Gold）"><span>FANY Luna_皮带款_玫瑰金（Rose Gold）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_皮带款_现代银（Modern Silver）"><span>FANY Luna_皮带款_现代银（Modern Silver）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_皮带款_热颂红（Passion Red）"><span>FANY Luna_皮带款_热颂红（Passion Red）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_皮带款_月光灰（Moonlight Gray）"><span>FANY Luna_皮带款_月光灰（Moonlight Gray）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_皮带款_摩卡棕（Mocha Brown）"><span>FANY Luna_皮带款_摩卡棕（Mocha Brown）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_真皮表带_午夜黑（Midnight Black）"><span>FANY Luna_真皮表带_午夜黑（Midnight Black）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_真皮表带_腮红玫瑰（Blush Rose）"><span>FANY Luna_真皮表带_腮红玫瑰（Blush Rose）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_真皮表带_亚麻白（Linen White）"><span>FANY Luna_真皮表带_亚麻白（Linen White）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_真皮表带_勃艮第红（Burgundy Red）"><span>FANY Luna_真皮表带_勃艮第红（Burgundy Red）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_真皮表带_月光灰（Moonlight Gray）"><span>FANY Luna_真皮表带_月光灰（Moonlight Gray）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_真皮表带_摩卡棕（Mocha Brown）"><span>FANY Luna_真皮表带_摩卡棕（Mocha Brown）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶款_冰晶蓝（Ice Blue）"><span>FANY Luna_硅胶款_冰晶蓝（Ice Blue）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶款_曜石黑（Obsidian Black）"><span>FANY Luna_硅胶款_曜石黑（Obsidian Black）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶款_兰花紫（Orchid Purple）"><span>FANY Luna_硅胶款_兰花紫（Orchid Purple）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶款_梦幻紫（Dream Purple）"><span>FANY Luna_硅胶款_梦幻紫（Dream Purple）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶款_云霜白（Cloud Cream）"><span>FANY Luna_硅胶款_云霜白（Cloud Cream）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶款_晨曦粉（Morning Pink）"><span>FANY Luna_硅胶款_晨曦粉（Morning Pink）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶表带_冰晶蓝（Ice Blue）"><span>FANY Luna_硅胶表带_冰晶蓝（Ice Blue）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶表带_曜石黑（Obsidian Black）"><span>FANY Luna_硅胶表带_曜石黑（Obsidian Black）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶表带_兰花紫（Orchid Purple）"><span>FANY Luna_硅胶表带_兰花紫（Orchid Purple）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶表带_梦幻紫（Dream Purple）"><span>FANY Luna_硅胶表带_梦幻紫（Dream Purple）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶表带_云霜白（Cloud Cream）"><span>FANY Luna_硅胶表带_云霜白（Cloud Cream）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna_硅胶表带_晨曦粉（Morning Pink）"><span>FANY Luna_硅胶表带_晨曦粉（Morning Pink）</span></label>
+              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="Fany-小号充电器"><span>Fany-小号充电器</span></label>
+	              <label class="checkbox-option"><input type="checkbox" data-field="cooperation_products" value="FANY Luna-蝴蝶手链套装"><span>FANY Luna-蝴蝶手链套装</span></label>
+	            </div>
+	          </fieldset>
+	          <label>
+	            <span>合作价格</span>
+	            <input id="cooperation_price" placeholder="例如 50 / 100 / 样品置换">
+	          </label>
+	          <label class="wide">
+	            <span>合作详情</span>
+	            <textarea id="cooperation_details" rows="4" placeholder="补充合作条件、报价口径、寄样或内容要求"></textarea>
+	          </label>
+	          <fieldset class="wide checkbox-field" data-checkbox-group="channel_ownership">
+	            <legend>渠道归属</legend>
             <input id="channel_ownership" type="hidden">
             <div class="checkbox-grid">
               <label class="checkbox-option"><input type="checkbox" data-field="channel_ownership" value="品牌"><span>品牌</span></label>

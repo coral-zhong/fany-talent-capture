@@ -61,6 +61,41 @@ const getHealthUrl = (endpointUrl) => {
   return healthUrl;
 };
 
+const getMeUrl = (endpointUrl) => {
+  const meUrl = new URL(endpointUrl);
+  meUrl.pathname = "/api/me";
+  meUrl.search = "";
+  meUrl.hash = "";
+  return meUrl;
+};
+
+const buildHeaders = () => {
+  const headers = { "ngrok-skip-browser-warning": "true" };
+  const authToken = $("authToken").value.trim();
+  const memberToken = $("memberToken").value.trim();
+  if (authToken) headers.authorization = `Bearer ${authToken}`;
+  if (memberToken) headers["x-fany-member-token"] = memberToken;
+  return headers;
+};
+
+const parseResponseBody = async (response) => {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+};
+
+const describeFailure = (body, status) => {
+  if (typeof body !== "string") return body?.error || `HTTP ${status}`;
+  if (/<!doctype html|<html[\s>]/i.test(body)) {
+    return "公网入口返回了 HTML 页面，通常是 ngrok 提示页或隧道短暂断开。请稍后重试，或让管理员检查公网入口。";
+  }
+  return body.slice(0, 240);
+};
+
 const getLoopbackFallbackUrl = (url) => {
   if (url.hostname !== "localhost") return null;
   const fallback = new URL(url.toString());
@@ -111,11 +146,11 @@ const testConnection = async () => {
     for (const url of urlsToTry) {
       try {
         const response = await fetch(url.toString(), {
-          headers: { "ngrok-skip-browser-warning": "true" }
+          headers: buildHeaders()
         });
-        const body = await response.json().catch(() => ({}));
+        const body = await parseResponseBody(response);
         if (!response.ok || !body.ok) {
-          lastError = new Error(body.error || response.status);
+          lastError = new Error(describeFailure(body, response.status));
           continue;
         }
         if (url.hostname === "127.0.0.1" && healthUrl.hostname === "localhost") {
@@ -124,7 +159,16 @@ const testConnection = async () => {
           $("endpointUrl").value = fixedEndpoint.toString();
           await save();
         }
-        setStatus(`连接成功：${body.table?.sheetId || "unknown"} / ${body.table?.viewId || "unknown"}`);
+
+        const meUrl = getMeUrl(url.toString());
+        const meResponse = await fetch(meUrl.toString(), { headers: buildHeaders() });
+        const meBody = await parseResponseBody(meResponse);
+        if (!meResponse.ok || !meBody.ok) {
+          throw new Error(describeFailure(meBody, meResponse.status));
+        }
+
+        const memberName = meBody.member?.name || "系统";
+        setStatus(`连接成功：${body.table?.sheetId || "unknown"} / ${body.table?.viewId || "unknown"}；录入人：${memberName}`);
         return;
       } catch (error) {
         lastError = error;
@@ -132,7 +176,7 @@ const testConnection = async () => {
     }
     throw lastError || new Error("未知错误");
   } catch (error) {
-    setStatus(`连接失败：${error.message}。请确认本地后端已启动。`, true);
+    setStatus(`连接失败：${error.message}`, true);
   }
 };
 

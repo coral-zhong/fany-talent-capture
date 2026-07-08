@@ -37,7 +37,7 @@ chrome.runtime.onInstalled.addListener(async () => {
       audience_top_gender: "最多受众性别",
       audience_top_age: "最多受众年龄",
       content_interests: "内容分布-兴趣点",
-      mentioned_brands_top10: "提及前十个品牌",
+      mentioned_brands_top10: "互动率-提及品牌前十个",
       fastmoss_sec_uid: "TT原生ID(secUid)",
       fastmoss_profile_url: "Fastmoss达人主页链接",
       shop_window_status: "橱窗状态",
@@ -48,7 +48,7 @@ chrome.runtime.onInstalled.addListener(async () => {
       avg_order_value: "客单价",
       commerce_categories: "带货品类",
       commerce_products: "带货商品",
-      audience_female_pct: "粉丝数据，女性占比",
+      audience_female_pct: "粉丝数据，女性占比%",
       fastmoss_audience_regions: "国家地区",
       fastmoss_audience_age: "年龄",
       top_hashtags: "前 5 主题标签",
@@ -73,12 +73,13 @@ chrome.runtime.onInstalled.addListener(async () => {
         }
       });
       const migrations = {
-        mentioned_brands_top10: ["互动率-提及品牌前十个"],
+        mentioned_brands_top10: ["提及前十个品牌"],
         email: ["联系方式", "联系邮箱", "邮件"],
         fastmoss_profile_url: ["FastMoss链接", "FastMoss 达人主页"],
         mcn_name: ["MCN签约"],
         sales_28d: ["带货销量（近28天）", "带货销量"],
         top_hashtags: ["前5主题标签", "近 28 天前五主题标签"],
+        audience_female_pct: ["粉丝数据，女性占比"],
         created_by_name: [undefined],
         cooperation_products: [undefined],
         cooperation_price: [undefined],

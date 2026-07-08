@@ -71,7 +71,7 @@ const FIELD_LABELS = {
   audience_top_gender: "最多受众性别",
   audience_top_age: "最多受众年龄",
   content_interests: "内容分布-兴趣点",
-  mentioned_brands_top10: "提及前十个品牌",
+  mentioned_brands_top10: "互动率-提及品牌前十个",
   fastmoss_sec_uid: "TT原生ID(secUid)",
   fastmoss_profile_url: "FastMoss 链接",
   shop_window_status: "橱窗状态",
@@ -82,7 +82,7 @@ const FIELD_LABELS = {
   avg_order_value: "客单价",
   commerce_categories: "带货品类",
   commerce_products: "带货商品",
-  audience_female_pct: "粉丝数据，女性占比",
+  audience_female_pct: "粉丝数据，女性占比%",
   fastmoss_audience_regions: "国家地区",
   fastmoss_audience_age: "年龄",
   top_hashtags: "前5主题标签",
@@ -238,6 +238,61 @@ const buildHeaders = (config, includeJson = false) => {
   if (config.authToken) headers.authorization = `Bearer ${config.authToken}`;
   if (config.memberToken) headers["x-fany-member-token"] = config.memberToken;
   return headers;
+};
+
+const parseApiBody = async (response) => {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+};
+
+const describeApiFailure = (body, status) => {
+  if (typeof body !== "string") return body?.error || `提交失败：${status}`;
+  if (/<!doctype html|<html[\s>]/i.test(body)) {
+    return "公网入口返回了 HTML 页面，通常是 ngrok 提示页或隧道短暂断开。请点设置页“测试连接”，成功后再提交。";
+  }
+  return body.slice(0, 240);
+};
+
+const shouldRetryApiFailure = (body, status) => {
+  if (status === 502 || status === 503 || status === 504) return true;
+  return typeof body === "string" && /<!doctype html|<html[\s>]/i.test(body);
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const apiFetch = async (config, pathname, options = {}) => {
+  const endpoint = getApiUrl(config, pathname);
+  if (options.search) endpoint.search = options.search;
+  const retries = options.retries ?? 2;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetch(endpoint.toString(), {
+        method: options.method || "GET",
+        headers: buildHeaders(config, Boolean(options.body)),
+        body: options.body ? JSON.stringify(options.body) : undefined
+      });
+      const body = await parseApiBody(response);
+      if (response.ok) return body;
+
+      const message = describeApiFailure(body, response.status);
+      lastError = new Error(message);
+      if (!shouldRetryApiFailure(body, response.status) || attempt === retries) throw lastError;
+    } catch (error) {
+      lastError = error;
+      const isNetworkError = /Failed to fetch|NetworkError|Load failed/i.test(error?.message || "");
+      if (!isNetworkError || attempt === retries) throw error;
+    }
+    await sleep(500 * (attempt + 1));
+  }
+
+  throw lastError || new Error("请求失败");
 };
 
 const normalizeHandle = (value) => String(value || "").trim().replace(/^@/, "").toLowerCase();
@@ -453,6 +508,23 @@ const clearPendingNoxProfile = async () => {
   await chrome.storage.local.remove("pendingNoxProfile");
 };
 
+const hasMeaningfulValue = (value) => {
+  if (Array.isArray(value)) return value.length > 0;
+  return value !== undefined && value !== null && String(value).trim() !== "";
+};
+
+const mergeNonEmptyRecords = (...records) => {
+  const merged = {};
+  for (const record of records) {
+    if (!record || typeof record !== "object") continue;
+    for (const [key, value] of Object.entries(record)) {
+      if (hasMeaningfulValue(value)) merged[key] = value;
+      else if (!(key in merged)) merged[key] = value;
+    }
+  }
+  return merged;
+};
+
 const clearCurrentTalentRecord = async () => {
   currentCaptureSource = "Chrome插件";
   currentSourceUrl = "";
@@ -535,10 +607,20 @@ const captureLayer = async (layer) => {
     throw new Error("请先打开 FastMoss 达人详情页，再点击“采集FastMoss”");
   }
   if (layer === "base" || layer === "fastmoss") targetTableManuallyChanged = false;
-  let baseRecord = layer === "base" ? { target_table: $("target_table").value || "general" } : await getCurrentTalentRecord();
+  const draftRecord = layer === "base" ? null : collectForm();
+  const currentRecord = layer === "base" ? null : await getCurrentTalentRecord();
+  const pendingNoxRecord = layer === "nox" ? await getPendingNoxProfile() : null;
+  const hasDraftIdentity = Boolean(
+    draftRecord?.talent_id ||
+    draftRecord?.platform_account ||
+    draftRecord?.profile_url ||
+    draftRecord?.display_name
+  );
+  let baseRecord = layer === "base"
+    ? { target_table: $("target_table").value || "general" }
+    : mergeNonEmptyRecords(pendingNoxRecord, currentRecord, hasDraftIdentity ? draftRecord : null);
   if (!baseRecord && layer === "fastmoss") baseRecord = {};
-  if (!baseRecord && layer === "nox") baseRecord = await getPendingNoxProfile();
-  if (!baseRecord && layer !== "base") {
+  if (!Object.keys(baseRecord || {}).length && layer !== "base" && layer !== "fastmoss") {
     throw new Error("请先在达人主页点击“采集基础信息”，再补代表内容或 Nox 信息");
   }
 
@@ -634,33 +716,34 @@ const openFastMoss = async () => {
 };
 
 const checkExists = async (record, config) => {
-  const endpoint = getApiUrl(config, "/api/talents/exists");
-  endpoint.search = `?key=${encodeURIComponent(record.talent_id || record.profile_url)}&target_table=${encodeURIComponent(record.target_table || "")}`;
-
-  const headers = buildHeaders(config);
-  const response = await fetch(endpoint.toString(), { headers });
-  if (!response.ok) return null;
-  return response.json();
+  if (!config.memberToken) return null;
+  const search = `?key=${encodeURIComponent(record.talent_id || record.profile_url)}&target_table=${encodeURIComponent(record.target_table || "")}`;
+  return apiFetch(config, "/api/talents/exists", { search });
 };
 
 const loadMember = async () => {
   const config = await getConfig();
   if (!config.endpointUrl) return;
-  const endpoint = getApiUrl(config, "/api/me");
+  if (!config.memberToken) {
+    setStatus("请先到设置页填写成员 token，避免录入人显示为系统。", true);
+    return;
+  }
   try {
-    const response = await fetch(endpoint.toString(), { headers: buildHeaders(config) });
-    const body = await response.json();
-    if (response.ok && body.member?.name) {
+    const body = await apiFetch(config, "/api/me", { retries: 1 });
+    if (body.member?.name) {
       setStatus(`当前录入人：${body.member.name}`);
     }
-  } catch {
-    // Member display is helpful but not required for capture.
+  } catch (error) {
+    setStatus(error.message || "成员 token 无效，请到设置页检查。", true);
   }
 };
 
 const submit = async () => {
   const config = await getConfig();
   if (!config.endpointUrl) config.endpointUrl = DEFAULT_ENDPOINT_URL;
+  if (!config.memberToken) {
+    throw new Error("请先到设置页填写成员 token，再提交达人库。");
+  }
 
   const record = collectForm();
   const completion = updateCompletionUi(record);
@@ -688,25 +771,10 @@ const submit = async () => {
     fieldMap: config.fieldMap ? JSON.parse(config.fieldMap) : {}
   };
 
-  const headers = buildHeaders(config, true);
-
-  const response = await fetch(getApiUrl(config, "/api/talents/upsert").toString(), {
+  const body = await apiFetch(config, "/api/talents/upsert", {
     method: "POST",
-    headers,
-    body: JSON.stringify(payload)
+    body: payload
   });
-
-  const text = await response.text();
-  let body;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    body = text;
-  }
-
-  if (!response.ok) {
-    throw new Error(typeof body === "string" ? body : body.error || `提交失败：${response.status}`);
-  }
 
   await setCurrentTalentRecord(record);
   if (record.source === "Chrome插件-Nox信息") {

@@ -97,6 +97,13 @@
     if (layer === "nox") {
       return ensureCreatorId({
         ...base,
+        talent_id: first(base.talent_id, base.creator_id, incoming.talent_id, incoming.creator_id),
+        creator_id: first(base.creator_id, base.talent_id, incoming.creator_id, incoming.talent_id),
+        platform: first(base.platform, incoming.platform),
+        platform_code: first(base.platform_code, incoming.platform_code),
+        platform_account: first(base.platform_account, incoming.platform_account),
+        platform_native_id: first(base.platform_native_id, incoming.platform_native_id),
+        profile_url: normalizeUrl(first(base.profile_url, incoming.profile_url)),
         country: first(incoming.country, firstAudienceCountry(incoming.audience_top_countries), base.country),
         creator_category: first(incoming.creator_category, base.creator_category),
         avg_views_30d: first(incoming.avg_views_30d, base.avg_views_30d),
@@ -108,6 +115,8 @@
         audience_top_age: first(incoming.audience_top_age, base.audience_top_age),
         content_interests: first(incoming.content_interests, base.content_interests),
         mentioned_brands_top10: first(incoming.mentioned_brands_top10, base.mentioned_brands_top10),
+        cooperation_price: first(incoming.cooperation_price, base.cooperation_price),
+        cooperation_details: first(incoming.cooperation_details, base.cooperation_details),
         nox_profile_url: normalizeUrl(first(incoming.nox_profile_url, incoming.source_url, base.nox_profile_url)),
         source: layerSource,
         source_url: normalizeUrl(first(incoming.source_url, incoming.nox_profile_url, base.source_url))

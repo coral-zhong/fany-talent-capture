@@ -120,6 +120,39 @@
     return "";
   };
 
+  const getNoxPlatformKeyFromPath = () => {
+    const match = location.pathname.match(/\/(tiktok|instagram|youtube|facebook)\//i);
+    return match?.[1]?.toLowerCase() || "";
+  };
+
+  const getNoxNativeIdFromPath = () => {
+    const match = location.pathname.match(/\/(?:tiktok|instagram|youtube|facebook)\/channel\/([^/?#]+)/i);
+    return match?.[1] ? decodeURIComponent(match[1]) : "";
+  };
+
+  const extractAccountFromProfileUrl = (url, platform) => {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url);
+      const parts = parsed.pathname.split("/").filter(Boolean).map((part) => decodeURIComponent(part));
+      if (/TikTok/i.test(platform)) {
+        const handle = parts.find((part) => part.startsWith("@")) || parts[0] || "";
+        return handle ? `@${handle.replace(/^@/, "")}` : "";
+      }
+      if (/Instagram/i.test(platform)) return parts[0] ? `@${parts[0].replace(/^@/, "")}` : "";
+      if (/YouTube/i.test(platform)) {
+        if (parts[0]?.startsWith("@")) return parts[0];
+        if (parts[0] === "channel" && parts[1]) return `channel/${parts[1]}`;
+        if ((parts[0] === "c" || parts[0] === "user") && parts[1]) return `${parts[0]}/${parts[1]}`;
+        return parts[0] || "";
+      }
+      if (/Facebook/i.test(platform)) return parts[0] || "";
+    } catch {
+      return "";
+    }
+    return "";
+  };
+
   const findInHtml = (patterns) => {
     const html = document.documentElement?.innerHTML || "";
     for (const pattern of patterns) {
@@ -1073,26 +1106,49 @@
     const contentText = snapshots["内容数据"] || text;
     const brandText = snapshots["品牌数据"] || text;
     const overviewLines = toTextLines(overviewText);
-    const profileUrl = findFirstUrl([
+    const brandLines = toTextLines(brandText);
+    const noxPlatformKey = getNoxPlatformKeyFromPath();
+    const noxNativeId = getNoxNativeIdFromPath();
+    const noxPlatformPatterns = {
+      tiktok: [/tiktok\.com\/@/i],
+      instagram: [/instagram\.com\/[^/?#]+/i],
+      youtube: [/youtube\.com\/(channel|@|c\/|user\/)/i],
+      facebook: [/facebook\.com\/[^/?#]+/i]
+    };
+    const fallbackPatterns = [
       /tiktok\.com\/@/i,
       /instagram\.com\/[^/?#]+/i,
-      /youtube\.com\/(channel|@|c\/|user\/)/i
-    ]);
-    const detectedPlatform = profileUrl.includes("tiktok.com")
+      /youtube\.com\/(channel|@|c\/|user\/)/i,
+      /facebook\.com\/[^/?#]+/i
+    ];
+    const profileUrl = findFirstUrl(noxPlatformPatterns[noxPlatformKey] || []) ||
+      (noxPlatformKey ? "" : findFirstUrl(fallbackPatterns));
+    const platformFromPath = {
+      tiktok: "TikTok",
+      instagram: "Instagram",
+      youtube: "YouTube",
+      facebook: "Facebook"
+    }[noxPlatformKey] || "";
+    const detectedPlatform = platformFromPath || (profileUrl.includes("tiktok.com")
       ? "TikTok"
       : profileUrl.includes("instagram.com")
         ? "Instagram"
         : profileUrl.includes("youtube.com")
           ? "YouTube"
-          : "Nox";
+          : profileUrl.includes("facebook.com")
+            ? "Facebook"
+            : "Nox");
     const platformCode = detectedPlatform === "TikTok"
       ? "TT"
       : detectedPlatform === "Instagram"
         ? "IG"
         : detectedPlatform === "YouTube"
           ? "YT"
+          : detectedPlatform === "Facebook"
+          ? "FB"
           : PLATFORM_CODES.nox;
-    const accountMatch = profileUrl.match(/(?:tiktok\.com\/@|instagram\.com\/|youtube\.com\/@)([^/?#]+)/i);
+    const platformAccount = extractAccountFromProfileUrl(profileUrl, detectedPlatform) ||
+      (detectedPlatform === "YouTube" && noxNativeId ? `channel/${noxNativeId}` : "");
     const title = readMeta('meta[property="og:title"]') || document.title;
     const geoBlock = textBlockAfter(audienceText, ["受众地区", "受众区域", "最多受众区域", "粉丝地区", "Audience Geography", "Top Countries"], 1200);
     const genderBlock = textBlockAfter(audienceText, ["最多受众性别", "受众性别", "Audience Gender", "Gender"], 450);
@@ -1115,12 +1171,19 @@
     const language = findLabeledValue(["语言", "Language"], 80)
       .replace(/^(语言|Language)\s*[:：]?/i, "")
       .trim();
+    const cooperationPrice = readNoxLabeledNumber(brandLines, ["平均合作价格", "合作价格", "Avg. Sponsored Price", "Average Collaboration Price"]);
+    const cooperationDetails = [
+      readLineValueAfter(["价格范围", "Price Range"], 3, brandLines) ? `价格范围：${readLineValueAfter(["价格范围", "Price Range"], 3, brandLines)}` : "",
+      readNoxLabeledNumber(brandLines, ["广告平均观看量", "Sponsored Avg. Views", "Ad Avg. Views"]) !== null ? `广告平均观看量：${readNoxLabeledNumber(brandLines, ["广告平均观看量", "Sponsored Avg. Views", "Ad Avg. Views"])}` : "",
+      readNoxLabeledPercent(brandLines, ["广告平均互动率", "Sponsored Engagement Rate", "Ad Engagement Rate"]) !== null ? `广告平均互动率：${readNoxLabeledPercent(brandLines, ["广告平均互动率", "Sponsored Engagement Rate", "Ad Engagement Rate"])}%` : "",
+      readLineValueAfter(["广告发布数量", "Sponsored Posts", "Ad Posts"], 3, brandLines) ? `广告发布数量：${readLineValueAfter(["广告发布数量", "Sponsored Posts", "Ad Posts"], 3, brandLines)}` : ""
+    ].filter(Boolean).join("；");
 
     return {
       platform: detectedPlatform,
       platform_code: platformCode,
-      platform_account: accountMatch?.[1] ? `@${accountMatch[1].replace(/^@/, "")}` : "",
-      platform_native_id: "",
+      platform_account: platformAccount,
+      platform_native_id: noxNativeId,
       profile_url: profileUrl || normalizeUrl(location.href),
       display_name: cleanTitle(title),
       follower_count: readNoxLabeledNumber(overviewLines, ["粉丝量", "粉丝数", "Followers", "Subscribers", "订阅者"]) ||
@@ -1141,6 +1204,8 @@
       content_interests: interests,
       creator_category: categoryTags.length ? categoryTags.join(" / ") : extractNoxCreatorCategory(categoryBlock, interests),
       mentioned_brands_top10: extractNoxPercentRows(brandBlock, { limit: 10 }),
+      cooperation_price: cooperationPrice,
+      cooperation_details: cooperationDetails,
       representative_content: representative.content,
       representative_likes: representative.likes,
       representative_comments: representative.comments,
